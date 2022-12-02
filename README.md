@@ -1,70 +1,53 @@
-# Getting Started with Create React App
+# GraphQL
 
-This project was bootstrapped with [Create React App](https://github.com/facebook/create-react-app).
+GraphQL 개념을 익히기 위해 [노마드코더 GraphQL로 영화 웹 앱 만들기](https://nomadcoders.co/react-graphql-for-beginners/lobby) 강의를 보고 작성한 repo 입니다. </br>
 
-## Available Scripts
+## 배운 점
+- client.js 를 만들어 백엔드 서버와 연결. index.js 에서 provider 로 client 주입 함
+```javascript
+import { ApolloClient, InMemoryCache } from "@apollo/client";
 
-In the project directory, you can run:
+const client = new ApolloClient({
+  uri: "http://localhost:4000",
+  cache: new InMemoryCache(), // 우리의 쿼리 결과를 브라우저의 메모리 캐시에 저장됨
+});
 
-### `npm start`
+export default client;
+```
 
-Runs the app in the development mode.\
-Open [http://localhost:3000](http://localhost:3000) to view it in your browser.
+- useQuery hook 을 이용하여 쿼리 사용
+```javascript
+const GET_MOVIE = gql`
+  query GetMovie($movieId: String!) {
+    movie(id: $movieId) {
+      id
+      title
+      medium_cover_image
+      rating
+      isLiked @client
+    }
+  }
+`;
 
-The page will reload when you make changes.\
-You may also see any lint errors in the console.
-
-### `npm test`
-
-Launches the test runner in the interactive watch mode.\
-See the section about [running tests](https://facebook.github.io/create-react-app/docs/running-tests) for more information.
-
-### `npm run build`
-
-Builds the app for production to the `build` folder.\
-It correctly bundles React in production mode and optimizes the build for the best performance.
-
-The build is minified and the filenames include the hashes.\
-Your app is ready to be deployed!
-
-See the section about [deployment](https://facebook.github.io/create-react-app/docs/deployment) for more information.
-
-### `npm run eject`
-
-**Note: this is a one-way operation. Once you `eject`, you can't go back!**
-
-If you aren't satisfied with the build tool and configuration choices, you can `eject` at any time. This command will remove the single build dependency from your project.
-
-Instead, it will copy all the configuration files and the transitive dependencies (webpack, Babel, ESLint, etc) right into your project so you have full control over them. All of the commands except `eject` will still work, but they will point to the copied scripts so you can tweak them. At this point you're on your own.
-
-You don't have to ever use `eject`. The curated feature set is suitable for small and middle deployments, and you shouldn't feel obligated to use this feature. However we understand that this tool wouldn't be useful if you couldn't customize it when you are ready for it.
-
-## Learn More
-
-You can learn more in the [Create React App documentation](https://facebook.github.io/create-react-app/docs/getting-started).
-
-To learn React, check out the [React documentation](https://reactjs.org/).
-
-### Code Splitting
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/code-splitting](https://facebook.github.io/create-react-app/docs/code-splitting)
-
-### Analyzing the Bundle Size
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size](https://facebook.github.io/create-react-app/docs/analyzing-the-bundle-size)
-
-### Making a Progressive Web App
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app](https://facebook.github.io/create-react-app/docs/making-a-progressive-web-app)
-
-### Advanced Configuration
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/advanced-configuration](https://facebook.github.io/create-react-app/docs/advanced-configuration)
-
-### Deployment
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/deployment](https://facebook.github.io/create-react-app/docs/deployment)
-
-### `npm run build` fails to minify
-
-This section has moved here: [https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify](https://facebook.github.io/create-react-app/docs/troubleshooting#npm-run-build-fails-to-minify)
+const {
+    data,
+    loading,
+    client: { cache },
+  } = useQuery(GET_MOVIE, { variables: { movieId } });
+  
+  const onClick = () => {
+    cache.writeFragment({
+      id: `Movie:${movieId}`,
+      fragment: gql`
+        fragment MovieFragment on Movie {
+          # title
+          isLiked
+        }
+      `,
+      data: {
+        // title: "moon!",
+        isLiked: !data.movie.isLiked,
+      },
+    });
+  };
+```
